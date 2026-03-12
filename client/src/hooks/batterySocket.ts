@@ -1,35 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { BatteryData } from "../types/battery.types";
 
 export const useBatterySocket = () => {
-	const [battery, setBattery] = useState<BatteryData | null>(null);
+  const [battery, setBattery] = useState<BatteryData | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
-	useEffect(() => {
-		const socket = new WebSocket(
-			`ws://${window.location.hostname}:3000`
-		);
+  useEffect(() => {
+    if (socketRef.current) return;
 
-		socket.onopen = () => {
-			console.log("Connected to battery server");
-		};
+    const socket = new WebSocket("ws://localhost:3000");
+    socketRef.current = socket;
 
-		socket.onmessage = (event) => {
-			const data = JSON.parse(event.data);
-			setBattery(data);
-		};
+    socket.onopen = () => {
+      console.log("Connected to battery server");
+    };
 
-		socket.onerror = (error) => {
-			console.error("WebSocket error:", error);
-		};
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log(data);
+      setBattery(data);
+    };
 
-		socket.onclose = () => {
-			console.log("WebSocket disconnected");
-		};
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
 
-		return () => {
-			socket.close();
-		};
-	}, []);
+    socket.onclose = () => {
+      console.log("WebSocket disconnected");
+    };
 
-	return battery;
+    return () => {
+      socket.close();
+      socketRef.current = null;
+    };
+  }, []);
+
+  return battery;
 };

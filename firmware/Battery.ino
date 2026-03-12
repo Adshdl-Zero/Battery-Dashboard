@@ -1,10 +1,10 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-#define SENSOR_PIN_1 A0
+#define SENSOR_PIN_1 A1
 // #define SENSOR_PIN_2 A2
 // #define ONE_WIRE_BUS_1 2
-#define ONE_WIRE_BUS_2 8
+#define ONE_WIRE_BUS_2 2
 
 // OneWire oneWire_1(ONE_WIRE_BUS_1);
 // DallasTemperature sensors_1(&oneWire_1);
@@ -20,12 +20,12 @@ const float SENSITIVITY = 1.0 / IPN;   // V/A (adjust if needed)
 float zeroOffset_1 = 2.5;
 float zeroOffset_2 = 2.5;
 
-int analogInput_1 = A1;
+int analogInput_1 = A2;
 // int analogInput_2 = A3;
 float R1 = 30000.0;
 float R2 = 7500.0;
 
-float readVoltage(uint8_t pin) {
+eloat readVoltage(uint8_t pin) {
  return (analogRead(pin) * VREF) / ADC_RES;
 }
 

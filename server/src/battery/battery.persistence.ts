@@ -1,31 +1,58 @@
 import fs from "fs";
 import path from "path";
 
-const FILE_PATH = path.resolve(__dirname, "../../data/battery-state.json");
+const STATE_FILE = path.resolve(__dirname, "../../data/battery-state.csv");
+const TELEMETRY_FILE = path.resolve(
+  __dirname,
+  "../../data/battery-telemetry.csv",
+);
 
-export interface BatteryPersistenceState {
-	soc: number;
-	soh: number;
-	usedAh: number;
+export interface BatteryState {
+  soc: number;
+  soh: number;
+  usedAh: number;
 }
 
-export const saveBatteryState = (state: BatteryPersistenceState) => {
-	try {
-		fs.writeFileSync(FILE_PATH, JSON.stringify(state, null, 2));
-	} catch (err) {
-		console.error("Error saving battery state:", err);
-	}
-};
+export interface BatteryTelemetry {
+  voltage: number;
+  current: number;
+  temperature: number;
+}
 
-export const loadBatteryState = (): BatteryPersistenceState | null => {
-	try {
-		if (!fs.existsSync(FILE_PATH)) return null;
+function ensureTelemetryFile() {
+  if (!fs.existsSync(TELEMETRY_FILE)) {
+    fs.writeFileSync(TELEMETRY_FILE, "timestamp,voltage,current,temperature\n");
+  }
+}
 
-		const data = fs.readFileSync(FILE_PATH, "utf8");
-		return JSON.parse(data);
-	} catch (err) {
-		console.error("Error loading battery state:", err);
-		return null;
-	}
+export function saveBatteryState(state: BatteryState) {
+  try {
+    const timestamp = new Date().toISOString();
 
-};
+    const content =
+      "timestamp,soc,soh,usedAh\n" +
+      `${timestamp},${state.soc},${state.soh},${state.usedAh}\n`;
+
+    // overwrite file → only latest value stored
+    fs.writeFileSync(STATE_FILE, content);
+  } catch (err) {
+    console.error("Error saving battery state:", err);
+  }
+}
+
+export function saveBatteryTelemetry(data: BatteryTelemetry) {
+  try {
+    ensureTelemetryFile();
+
+    const timestamp = new Date().toISOString();
+
+    const row =
+      [timestamp, data.voltage, data.current, data.temperature].join(",") +
+      "\n";
+
+    // append readings
+    fs.appendFileSync(TELEMETRY_FILE, row);
+  } catch (err) {
+    console.error("Error saving telemetry:", err);
+  }
+}
