@@ -1,11 +1,18 @@
 import fs from "fs";
 import path from "path";
 
-const STATE_FILE = path.resolve(__dirname, "../../data/battery-state.csv");
-const TELEMETRY_FILE = path.resolve(
-  __dirname,
-  "../../data/battery-telemetry.csv",
-);
+const DATA_DIR = path.resolve(__dirname, "../../data");
+
+const STATE_FILE = path.join(DATA_DIR, "battery-state.csv");
+
+const getTelemetryFilePath = () => {
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[:.]/g, "-");
+
+  return path.join(DATA_DIR, `battery-telemetry-${timestamp}.csv`);
+};
+
+const TELEMETRY_FILE = getTelemetryFilePath();
 
 export interface BatteryState {
   soc: number;
@@ -25,6 +32,30 @@ function ensureTelemetryFile() {
   }
 }
 
+function cleanupOldTelemetryFiles(maxFiles = 5) {
+  try {
+    const files = fs
+      .readdirSync(DATA_DIR)
+      .filter((file) => file.startsWith("battery-telemetry-"))
+      .map((file) => ({
+        name: file,
+        path: path.join(DATA_DIR, file),
+        time: fs.statSync(path.join(DATA_DIR, file)).mtime.getTime(),
+      }))
+      .sort((a, b) => b.time - a.time); // newest first
+
+    // keep only latest maxFiles
+    const filesToDelete = files.slice(maxFiles);
+
+    for (const file of filesToDelete) {
+      fs.unlinkSync(file.path);
+      console.log(`Deleted old telemetry file: ${file.name}`);
+    }
+  } catch (err) {
+    console.error("Error cleaning telemetry files:", err);
+  }
+}
+
 export function saveBatteryState(state: BatteryState) {
   try {
     const timestamp = new Date().toISOString();
@@ -33,7 +64,6 @@ export function saveBatteryState(state: BatteryState) {
       "timestamp,soc,soh,usedAh\n" +
       `${timestamp},${state.soc},${state.soh},${state.usedAh}\n`;
 
-    // overwrite file → only latest value stored
     fs.writeFileSync(STATE_FILE, content);
   } catch (err) {
     console.error("Error saving battery state:", err);
@@ -50,8 +80,10 @@ export function saveBatteryTelemetry(data: BatteryTelemetry) {
       [timestamp, data.voltage, data.current, data.temperature].join(",") +
       "\n";
 
-    // append readings
     fs.appendFileSync(TELEMETRY_FILE, row);
+
+    // 🔥 cleanup after writing
+    cleanupOldTelemetryFiles(5);
   } catch (err) {
     console.error("Error saving telemetry:", err);
   }
