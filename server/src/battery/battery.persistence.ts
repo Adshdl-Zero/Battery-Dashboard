@@ -38,7 +38,7 @@ function ensureTelemetryFile() {
   }
 }
 
-function cleanupOldTelemetryFiles(maxFiles = 5) {
+function cleanupOldTelemetryFiles(maxFiles = 50) {
   try {
     const files = fs
       .readdirSync(DATA_DIR)
@@ -91,8 +91,7 @@ export function saveBatteryTelemetry(data: BatteryTelemetry) {
         data.current,
         data.temp1,
         data.temp2,
-      ].join(",") +
-      "\n";
+      ].join(",") + "\n";
 
     fs.appendFileSync(TELEMETRY_FILE, row);
 
