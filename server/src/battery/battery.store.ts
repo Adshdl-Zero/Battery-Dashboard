@@ -3,8 +3,11 @@ import { config } from "../config/env";
 
 export const battery: Battery = {
   voltage: 0,
+  voltage1: 0,
+  voltage2: 0,
   current: 0,
-  temperature: 0,
+  temp1: 0,
+  temp2: 0,
   soc: 100,
   soh: 100,
 };

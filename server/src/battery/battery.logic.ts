@@ -31,7 +31,10 @@ let endCounter = 0;
 export const updateBatteryLogic = (
   voltage: number,
   current: number,
-  temperature: number,
+  temp1: number,
+  temp2: number,
+  voltage1 = 0,
+  voltage2 = 0,
 ) => {
   const now = Date.now();
   const dt = (now - lastTime) / 1000;
@@ -51,13 +54,19 @@ export const updateBatteryLogic = (
 
   battery.soc = Math.max(0, Math.min(100, soc));
   battery.voltage = voltage;
+  battery.voltage1 = voltage1;
+  battery.voltage2 = voltage2;
   battery.current = filteredCurrent;
-  battery.temperature = temperature;
+  battery.temp1 = temp1;
+  battery.temp2 = temp2;
 
   saveBatteryTelemetry({
     voltage,
+    voltage1,
+    voltage2,
     current: filteredCurrent,
-    temperature,
+    temp1,
+    temp2,
   });
 
   if (!inLoadEvent && Math.abs(filteredCurrent) > CURRENT_START_THRESHOLD) {
@@ -112,6 +121,8 @@ export const updateBatteryLogic = (
 
   console.log({
     voltage: battery.voltage.toFixed(2),
+    voltage1: voltage1.toFixed(2),
+    voltage2: voltage2.toFixed(2),
     current: filteredCurrent.toFixed(2),
     soc: battery.soc.toFixed(2),
     soh: battery.soh?.toFixed(2),

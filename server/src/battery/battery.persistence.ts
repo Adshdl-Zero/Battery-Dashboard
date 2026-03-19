@@ -22,13 +22,19 @@ export interface BatteryState {
 
 export interface BatteryTelemetry {
   voltage: number;
+  voltage1: number;
+  voltage2: number;
   current: number;
-  temperature: number;
+  temp1: number;
+  temp2: number;
 }
 
 function ensureTelemetryFile() {
   if (!fs.existsSync(TELEMETRY_FILE)) {
-    fs.writeFileSync(TELEMETRY_FILE, "timestamp,voltage,current,temperature\n");
+    fs.writeFileSync(
+      TELEMETRY_FILE,
+      "timestamp,voltage,voltage1,voltage2,current,temp1,temp2\n",
+    );
   }
 }
 
@@ -77,7 +83,15 @@ export function saveBatteryTelemetry(data: BatteryTelemetry) {
     const timestamp = new Date().toISOString();
 
     const row =
-      [timestamp, data.voltage, data.current, data.temperature].join(",") +
+      [
+        timestamp,
+        data.voltage,
+        data.voltage1,
+        data.voltage2,
+        data.current,
+        data.temp1,
+        data.temp2,
+      ].join(",") +
       "\n";
 
     fs.appendFileSync(TELEMETRY_FILE, row);

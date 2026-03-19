@@ -24,15 +24,32 @@ export const initSerial = () => {
     try {
       const parts = line.trim().split(",");
 
-      if (parts.length < 4) return; // ensure full line received
+      // Expected format from Battery.ino:
+      // millis, vin_1, vin_2, current, temp1, temp2
+      if (parts.length < 6) return;
 
-      const voltage = isNaN(parseFloat(parts[1])) ? 0 : parseFloat(parts[1]);
-      const current = -isNaN(parseFloat(parts[2])) ? 0 : parseFloat(parts[2]);
-      const temperature = isNaN(parseFloat(parts[3]))
-        ? 0
-        : parseFloat(parts[3]);
+      const vin1 = parseFloat(parts[1]);
+      const vin2 = parseFloat(parts[2]);
+      const current = parseFloat(parts[3]);
+      const temp1 = parseFloat(parts[4]);
+      const temp2 = parseFloat(parts[5]);
 
-      const updatedBattery = updateBatteryLogic(voltage, current, temperature);
+      const voltage1 = isNaN(vin1) ? 0 : vin1;
+      const voltage2 = isNaN(vin2) ? 0 : vin2;
+      const measuredCurrent = isNaN(current) ? 0 : current;
+
+      // Use total pack voltage for logic (series cells) and keep both voltages in telemetry.
+      const packVoltage = voltage1 + voltage2;
+
+      const updatedBattery = updateBatteryLogic(
+        packVoltage,
+        measuredCurrent,
+        isNaN(temp1) ? 0 : temp1,
+        isNaN(temp2) ? 0 : temp2,
+        voltage1,
+        voltage2,
+      );
+
       broadcast(updatedBattery);
     } catch (err) {
       console.log("Serial parse error:", err);
