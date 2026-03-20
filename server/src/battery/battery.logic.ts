@@ -28,6 +28,9 @@ let eventStartTime = 0;
 let startCounter = 0;
 let endCounter = 0;
 
+let sohTimer: NodeJS.Timeout | null = null;
+const SOH_DELAY = config.SOH_DELAY;
+
 export const updateBatteryLogic = (
   voltage: number,
   current: number,
@@ -98,11 +101,16 @@ export const updateBatteryLogic = (
         peakCurrent > CURRENT_START_THRESHOLD &&
         eventDuration > MIN_EVENT_DURATION
       ) {
-        const soh = calculateSOH();
+	      if (sohTimer) {
+		      clearTimeout(sohTimer);
+	      }
+	      sohTimer = setTimeout(() => {
+		      const soh = calculateSOH();
 
-        if (soh !== null) {
-          battery.soh = soh;
-        }
+		      if (soh != null) {
+			      battery.soh = soh;
+		      }
+	      }, SOH_DELAY);
       }
 
       inLoadEvent = false;

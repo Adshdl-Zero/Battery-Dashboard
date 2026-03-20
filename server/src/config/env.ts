@@ -11,11 +11,13 @@ export const config = {
 
   // Event detection
   CURRENT_START_THRESHOLD: Number(process.env.CURRENT_START_THRESHOLD || 20),
-  CURRENT_END_THRESHOLD: Number(process.env.CURRENT_END_THRESHOLD || 1),
+  CURRENT_END_THRESHOLD: Number(process.env.CURRENT_END_THRESHOLD || 10),
 
   DEBOUNCE_COUNT: Number(process.env.DEBOUNCE_COUNT || 3),
   MIN_EVENT_DURATION: Number(process.env.MIN_EVENT_DURATION || 0.5),
 
   SERIAL_PORT: process.env.SERIAL_PORT || "/dev/ttyACM0",
   SERIAL_BAUD_RATE: Number(process.env.SERIAL_BAUD_RATE || 9600),
+
+  SOH_DELAY: Number(process.env.SOH_DELAY || 5000),
 };

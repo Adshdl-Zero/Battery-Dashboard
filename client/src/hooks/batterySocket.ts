@@ -17,7 +17,6 @@ export const useBatterySocket = () => {
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log(data);
       setBattery(data);
     };
 
