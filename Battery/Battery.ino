@@ -12,14 +12,14 @@ const float SENSITIVITY = 1.0 / IPN;
 
 // -------- VOLTAGE SENSORS --------
 int voltagePin_1 = A2;
-int voltagePin_2 = A3;
+int voltagePin_2 = A4;
 
 float R1 = 30000.0;
 float R2 = 7500.0;
 
 // -------- TEMP SENSORS --------
 #define ONE_WIRE_BUS_1 2
-#define ONE_WIRE_BUS_2 3
+#define ONE_WIRE_BUS_2 4
 
 OneWire oneWire_1(ONE_WIRE_BUS_1);
 OneWire oneWire_2(ONE_WIRE_BUS_2);
