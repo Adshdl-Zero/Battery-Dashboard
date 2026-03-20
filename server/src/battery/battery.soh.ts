@@ -91,14 +91,29 @@ export function calculateInternalResistance(): number | null {
   return median;
 }
 
-export function calculateSOH(): number | null {
-  const rMeasured = calculateInternalResistance();
+export function calculateSOH({
+  peakCurrent,
+  voltageBefore,
+  voltageDuring,
+}: {
+  peakCurrent: number;
+  voltageBefore: number;
+  voltageDuring: number;
+}): number | null {
+  if (peakCurrent <= 0 || voltageBefore <= 0 || voltageDuring <= 0) {
+    return null;
+  }
 
-  if (!rMeasured) return null;
+  const deltaV = voltageBefore - voltageDuring;
+
+  if (deltaV <= 0) return null;
+
+  const rMeasured = deltaV / peakCurrent;
+
+  console.log("R_measured:", rMeasured);
 
   let soh = (R_NEW / rMeasured) * 100;
 
-  // clamp
   if (soh > 100) soh = 100;
   if (soh < 0) soh = 0;
 

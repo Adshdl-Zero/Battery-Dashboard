@@ -6,30 +6,21 @@ import {
 } from "./battery.store";
 
 import { saveBatteryState, saveBatteryTelemetry } from "./battery.persistence";
-
 import { calculateSOH } from "./battery.soh";
 import { config } from "../config/env";
 
 let lastTime = Date.now();
 
-const ALPHA = config.FILTER_ALPHA;
 const CURRENT_START_THRESHOLD = config.CURRENT_START_THRESHOLD;
 const CURRENT_END_THRESHOLD = config.CURRENT_END_THRESHOLD;
 const MIN_EVENT_DURATION = config.MIN_EVENT_DURATION;
-const DEBOUNCE_COUNT = config.DEBOUNCE_COUNT;
-const NOISE_THRESHOLD = config.CURRENT_NOISE_THRESHOLD;
-
-let filteredCurrent = 0;
 
 let inLoadEvent = false;
 let peakCurrent = 0;
 let eventStartTime = 0;
 
-let startCounter = 0;
-let endCounter = 0;
-
-let sohTimer: NodeJS.Timeout | null = null;
-const SOH_DELAY = config.SOH_DELAY;
+let voltageBefore = 0; // true idle voltage
+let voltageDuring = 0; // voltage at peak load
 
 export const updateBatteryLogic = (
   voltage: number,
@@ -43,13 +34,10 @@ export const updateBatteryLogic = (
   const dt = (now - lastTime) / 1000;
   lastTime = now;
 
-  filteredCurrent = ALPHA * current + (1 - ALPHA) * filteredCurrent;
+  const rawCurrent = current;
 
-  if (Math.abs(filteredCurrent) < NOISE_THRESHOLD) {
-    filteredCurrent = 0;
-  }
-
-  const deltaAh = (filteredCurrent * dt) / 3600;
+  //SOC calculation
+  const deltaAh = (rawCurrent * dt) / 3600;
   addUsedAh(deltaAh);
 
   const usedAh = getUsedAh();
@@ -59,7 +47,7 @@ export const updateBatteryLogic = (
   battery.voltage = voltage;
   battery.voltage1 = voltage1;
   battery.voltage2 = voltage2;
-  battery.current = filteredCurrent;
+  battery.current = rawCurrent;
   battery.temp1 = temp1;
   battery.temp2 = temp2;
 
@@ -67,58 +55,75 @@ export const updateBatteryLogic = (
     voltage,
     voltage1,
     voltage2,
-    current: filteredCurrent,
+    current: rawCurrent,
     temp1,
     temp2,
   });
 
-  if (!inLoadEvent && Math.abs(filteredCurrent) > CURRENT_START_THRESHOLD) {
-    startCounter++;
-
-    if (startCounter >= DEBOUNCE_COUNT) {
-      inLoadEvent = true;
-      peakCurrent = Math.abs(filteredCurrent);
-      eventStartTime = now;
-      startCounter = 0;
-    }
-  } else {
-    startCounter = 0;
+  //IDLE detection
+  if (Math.abs(rawCurrent) < 1) {
+    voltageBefore = voltage;
   }
 
-  if (inLoadEvent) {
-    if (Math.abs(filteredCurrent) > peakCurrent) {
-      peakCurrent = Math.abs(filteredCurrent);
+  //START EVENT (discharge only)
+  if (
+    !inLoadEvent &&
+    rawCurrent > CURRENT_START_THRESHOLD // only discharge
+  ) {
+    inLoadEvent = true;
+    peakCurrent = rawCurrent;
+    eventStartTime = now;
+
+    voltageDuring = voltage;
+
+    console.log("EVENT STARTED");
+  }
+
+  //TRACK PEAK (only during discharge)
+  if (inLoadEvent && rawCurrent > 0) {
+    if (rawCurrent >= peakCurrent) {
+      peakCurrent = rawCurrent;
+      voltageDuring = voltage;
     }
   }
 
-  if (inLoadEvent && Math.abs(filteredCurrent) < CURRENT_END_THRESHOLD) {
-    endCounter++;
+  //END EVENT
+  if (inLoadEvent && Math.abs(rawCurrent) < CURRENT_END_THRESHOLD) {
+    const eventDuration = (now - eventStartTime) / 1000;
 
-    if (endCounter >= DEBOUNCE_COUNT) {
-      const eventDuration = (now - eventStartTime) / 1000;
+    console.log("EVENT ENDED", {
+      peakCurrent,
+      eventDuration,
+      voltageBefore,
+      voltageDuring,
+    });
 
-      if (
-        peakCurrent > CURRENT_START_THRESHOLD &&
-        eventDuration > MIN_EVENT_DURATION
-      ) {
-	      if (sohTimer) {
-		      clearTimeout(sohTimer);
-	      }
-	      sohTimer = setTimeout(() => {
-		      const soh = calculateSOH();
+    if (
+      peakCurrent > CURRENT_START_THRESHOLD &&
+      eventDuration > MIN_EVENT_DURATION &&
+      voltageBefore > voltageDuring
+    ) {
+      console.log("CALCULATING SOH...");
 
-		      if (soh != null) {
-			      battery.soh = soh;
-		      }
-	      }, SOH_DELAY);
+      const soh = calculateSOH({
+        peakCurrent,
+        voltageBefore,
+        voltageDuring,
+      });
+
+      console.log("SOH RESULT:", soh);
+
+      if (soh != null) {
+        battery.soh = soh;
       }
-
-      inLoadEvent = false;
-      peakCurrent = 0;
-      endCounter = 0;
+    } else {
+      console.log("SOH SKIPPED (invalid conditions)");
     }
-  } else {
-    endCounter = 0;
+
+    // Reset
+    inLoadEvent = false;
+    peakCurrent = 0;
+    voltageDuring = 0;
   }
 
   saveBatteryState({
@@ -129,12 +134,10 @@ export const updateBatteryLogic = (
 
   console.log({
     voltage: battery.voltage.toFixed(2),
-    voltage1: voltage1.toFixed(2),
-    voltage2: voltage2.toFixed(2),
-    current: filteredCurrent.toFixed(2),
+    current: rawCurrent.toFixed(2),
     soc: battery.soc.toFixed(2),
     soh: battery.soh?.toFixed(2),
-    event: inLoadEvent ? "ACTIVE" : "IDLE",
+    state: inLoadEvent ? "LOAD" : "IDLE",
     peakCurrent: peakCurrent.toFixed(2),
   });
 
