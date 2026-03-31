@@ -146,7 +146,9 @@ const BatteryCard = ({ data }: Props) => {
               minWidth: 130,
             }}
           >
-            <div style={{ color: "#94a3b8", fontSize: 11 }}>CHARGE LEVEL</div>
+            <div style={{ color: "#94a3b8", fontSize: 11 }}>
+              HEALTH STATE (SoH) 1
+            </div>
             <div style={{ fontSize: 30, fontWeight: 700, color: "#38bdf8" }}>
               {data.soc.toFixed(0)}%
             </div>
@@ -161,7 +163,7 @@ const BatteryCard = ({ data }: Props) => {
             }}
           >
             <div style={{ color: "#94a3b8", fontSize: 11 }}>
-              HEALTH STATE (SoH)
+              HEALTH STATE (SoH) 2
             </div>
             <div style={{ fontSize: 24, fontWeight: 700, color: "#34d399" }}>
               {data.soh.toFixed(1)}%
@@ -187,12 +189,12 @@ const BatteryCard = ({ data }: Props) => {
             gap: 10,
           }}
         >
-          <CardValue label="Pack Voltage" value={data.voltage} unit="V" />
-          <CardValue label="Cell 1" value={data.voltage1} unit="V" />
-          <CardValue label="Cell 2" value={data.voltage2} unit="V" />
+          <CardValue label="Total Voltage" value={data.voltage} unit="V" />
+          <CardValue label="Battery 1" value={data.voltage1} unit="V" />
+          <CardValue label="Battery 2" value={data.voltage2} unit="V" />
           <CardValue label="Current" value={data.current} unit="A" />
-          <CardValue label="Core 1" value={data.temp1} unit="°C" />
-          <CardValue label="Core 2" value={data.temp2} unit="°C" />
+          <CardValue label="Temperature 1" value={data.temp1} unit="°C" />
+          <CardValue label="Temperature 2" value={data.temp2} unit="°C" />
         </div>
       </div>
 
