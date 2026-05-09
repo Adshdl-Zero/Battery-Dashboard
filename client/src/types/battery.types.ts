@@ -6,5 +6,6 @@ export interface BatteryData {
   temp1: number;
   temp2: number;
   soc: number;
-  soh: number;
+  soh1: number;
+  soh2: number;
 }

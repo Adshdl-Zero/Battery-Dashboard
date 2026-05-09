@@ -5,6 +5,8 @@ import { config } from "../config/env";
 const DATA_DIR = path.resolve(__dirname, "../../data");
 
 const R_NEW = config.R_NEW;
+const ALPHA = config.ALPHA;
+const T_REF = config.T_REF;
 
 interface TelemetryRow {
   voltage: number;
@@ -95,10 +97,12 @@ export function calculateSOH({
   peakCurrent,
   voltageBefore,
   voltageDuring,
+  temperature,
 }: {
   peakCurrent: number;
   voltageBefore: number;
   voltageDuring: number;
+  temperature: number;
 }): number | null {
   if (peakCurrent <= 0 || voltageBefore <= 0 || voltageDuring <= 0) {
     return null;
@@ -112,7 +116,12 @@ export function calculateSOH({
 
   console.log("R_measured:", rMeasured);
 
-  let soh = (R_NEW / rMeasured) * 100;
+  // Temperature correction
+  const rTempCorrected = (1 + ALPHA * (temperature - T_REF)) * rMeasured;
+
+  console.log("R_temp_corrected:", rTempCorrected);
+
+  let soh = (R_NEW / rTempCorrected) * 100;
 
   if (soh > 100) soh = 100;
   if (soh < 0) soh = 0;

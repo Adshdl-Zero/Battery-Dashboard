@@ -16,7 +16,8 @@ const TELEMETRY_FILE = getTelemetryFilePath();
 
 export interface BatteryState {
   soc: number;
-  soh: number;
+  soh1: number;
+  soh2: number;
   usedAh: number;
 }
 
@@ -67,8 +68,8 @@ export function saveBatteryState(state: BatteryState) {
     const timestamp = new Date().toISOString();
 
     const content =
-      "timestamp,soc,soh,usedAh\n" +
-      `${timestamp},${state.soc},${state.soh},${state.usedAh}\n`;
+      "timestamp,soc,soh1,soh2,usedAh\n" +
+      `${timestamp},${state.soc},${state.soh1},${state.soh2},${state.usedAh}\n`;
 
     fs.writeFileSync(STATE_FILE, content);
   } catch (err) {

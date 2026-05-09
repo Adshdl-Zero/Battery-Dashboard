@@ -9,7 +9,8 @@ export const battery: Battery = {
   temp1: 0,
   temp2: 0,
   soc: 100,
-  soh: 100,
+  soh1: 100,
+  soh2: 100,
 };
 
 export const ratedCapacityAh = config.RATED_CAPACITY_AH;

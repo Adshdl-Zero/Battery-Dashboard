@@ -22,6 +22,12 @@ let eventStartTime = 0;
 let voltageBefore = 0; // true idle voltage
 let voltageDuring = 0; // voltage at peak load
 
+let voltage1Before = 0;
+let voltage1During = 0;
+
+let voltage2Before = 0;
+let voltage2During = 0;
+
 export const updateBatteryLogic = (
   voltage: number,
   current: number,
@@ -63,6 +69,8 @@ export const updateBatteryLogic = (
   //IDLE detection
   if (Math.abs(rawCurrent) < 1) {
     voltageBefore = voltage;
+    voltage1Before = voltage1;
+    voltage2Before = voltage2;
   }
 
   //START EVENT (discharge only)
@@ -75,6 +83,8 @@ export const updateBatteryLogic = (
     eventStartTime = now;
 
     voltageDuring = voltage;
+    voltage1During = voltage1;
+    voltage2During = voltage2;
 
     console.log("EVENT STARTED");
   }
@@ -84,6 +94,8 @@ export const updateBatteryLogic = (
     if (rawCurrent >= peakCurrent) {
       peakCurrent = rawCurrent;
       voltageDuring = voltage;
+      voltage1During = voltage1;
+      voltage2During = voltage2;
     }
   }
 
@@ -105,16 +117,28 @@ export const updateBatteryLogic = (
     ) {
       console.log("CALCULATING SOH...");
 
-      const soh = calculateSOH({
+      const soh1 = calculateSOH({
         peakCurrent,
-        voltageBefore,
-        voltageDuring,
+        voltageBefore: voltage1Before,
+        voltageDuring: voltage1During,
+        temperature: temp1,
       });
 
-      console.log("SOH RESULT:", soh);
+      const soh2 = calculateSOH({
+        peakCurrent,
+        voltageBefore: voltage2Before,
+        voltageDuring: voltage2During,
+        temperature: temp2,
+      });
 
-      if (soh != null) {
-        battery.soh = soh;
+      console.log("SOH1 RESULT:", soh1);
+      console.log("SOH2 RESULT:", soh2);
+
+      if (soh1 != null) {
+        battery.soh1 = soh1;
+      }
+      if (soh2 != null) {
+        battery.soh2 = soh2;
       }
     } else {
       console.log("SOH SKIPPED (invalid conditions)");
@@ -124,11 +148,14 @@ export const updateBatteryLogic = (
     inLoadEvent = false;
     peakCurrent = 0;
     voltageDuring = 0;
+    voltage1During = 0;
+    voltage2During = 0;
   }
 
   saveBatteryState({
     soc: battery.soc,
-    soh: battery.soh,
+    soh1: battery.soh1,
+    soh2: battery.soh2,
     usedAh: usedAh,
   });
 
@@ -136,7 +163,8 @@ export const updateBatteryLogic = (
     voltage: battery.voltage.toFixed(2),
     current: rawCurrent.toFixed(2),
     soc: battery.soc.toFixed(2),
-    soh: battery.soh?.toFixed(2),
+    soh1: battery.soh1?.toFixed(2),
+    soh2: battery.soh2?.toFixed(2),
     state: inLoadEvent ? "LOAD" : "IDLE",
     peakCurrent: peakCurrent.toFixed(2),
   });

@@ -5,6 +5,10 @@ export const config = {
   RATED_CAPACITY_AH: Number(process.env.RATED_CAPACITY_AH || 7),
   R_NEW: Number(process.env.R_NEW || 0.007),
 
+  // Temperature correction for SOH
+  ALPHA: Number(process.env.ALPHA || 0.015), // Temperature coefficient
+  T_REF: Number(process.env.T_REF || 25), // Reference temperature in Celsius
+
   // Event detection
   CURRENT_START_THRESHOLD: Number(process.env.CURRENT_START_THRESHOLD || 20),
   CURRENT_END_THRESHOLD: Number(process.env.CURRENT_END_THRESHOLD || 10),
