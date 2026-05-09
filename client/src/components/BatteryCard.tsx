@@ -147,10 +147,10 @@ const BatteryCard = ({ data }: Props) => {
             }}
           >
             <div style={{ color: "#94a3b8", fontSize: 11 }}>
-              HEALTH STATE (SoH) 1
+              HEALTH STATE 1
             </div>
             <div style={{ fontSize: 30, fontWeight: 700, color: "#38bdf8" }}>
-              {data.soc.toFixed(0)}%
+              {data.soh1.toFixed(1)}%
             </div>
           </div>
           <div
@@ -163,10 +163,10 @@ const BatteryCard = ({ data }: Props) => {
             }}
           >
             <div style={{ color: "#94a3b8", fontSize: 11 }}>
-              HEALTH STATE (SoH) 2
+              HEALTH STATE 2
             </div>
             <div style={{ fontSize: 24, fontWeight: 700, color: "#34d399" }}>
-              {data.soh.toFixed(1)}%
+              {data.soh2.toFixed(1)}%
             </div>
           </div>
         </div>
